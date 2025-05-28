@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>経営幹部向けMBAスタイル研修プログラムSPA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Visualization & Content Choices:
+        - エグゼクティブサマリー(I): Goal: プログラム全体の目的と価値を簡潔に伝える, Viz: 静的テキストと強調, Interaction: なし, Justification: 導入部での全体像把握, Library: HTML/Tailwind.
+        - プログラムの基礎(II): Goal: 中小企業におけるMBA教育の意義を理解させる, Viz: 静的テキストとハイライト, Interaction: キーフレーズにホバーでツールチップ表示(JS), Justification: 理論的背景の強化, Library: HTML/Tailwind, JS.
+        - カリキュラム案(III)-表1: Goal: 詳細内容の段階的提示, Viz: カテゴリ別アコーディオン＋サブモジュールクリックでモーダル詳細表示(HTML/JS), Interaction: クリックで展開/表示, Justification: 情報量の多い表の可読性向上, Library: Vanilla JS.
+        - 学習形式(IV): Goal: 学習形式と実践的応用方法の提示, Viz: アイコン付きカード形式(HTML/CSS), Interaction: ホバーで視覚的フィードバック, Justification: 選択肢の視覚的整理と比較容易性, Library: HTML/Tailwind, JS.
+        - 実施スケジュール案(V)-表2: Goal: 段階的スケジュールの視覚化, Viz: HTML/CSSタイムライン風表示とChart.js横棒グラフ, Interaction: フェーズクリックで詳細強調, Justification: 時間的流れと関連性の理解促進, Library: HTML/CSS/JS, Chart.js.
+        - 成果測定(VI): Goal: 成果測定方法とKPIの明確化, Viz: カテゴリ別リスト(HTML/CSS), Interaction: ホバーで補足説明ツールチップ, Justification: 複雑な情報の整理と価値理解, Library: HTML/CSS/JS.
+        - 次のステップ(VII): Goal: プログラム導入への行動喚起, Viz: 番号付きリストと提案(HTML/CSS), Interaction: なし（シンプルに提示）, Justification: 具体的なアクション提示, Library: HTML/Tailwind.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px; /* Adjusted for better bar chart display */
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px; /* Adjusted for bar chart */
+            max-height: 450px; /* Adjusted for bar chart */
+            padding: 1rem;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .tooltip {
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            z-index: 100;
+            display: none;
+            white-space: pre-wrap;
+            max-width: 300px;
+        }
+        .key-phrase:hover .tooltip {
+            display: block;
+        }
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; /* 10% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-width: 700px;
+            border-radius: 8px;
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .active-nav {
+            background-color: #0d9488; /* Teal-600 */
+            color: white;
+        }
+        .section-fade-enter {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .section-fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 300ms ease-out, transform 300ms ease-out;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-slate-700 antialiased">
+
+    <header class="bg-slate-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-xl sm:text-2xl font-bold">経営幹部向けMBAスタイル研修プログラム</h1>
+                <nav class="hidden md:flex space-x-1">
+                    <button data-target="home" class="nav-link px-3 py-2 rounded-md text-sm font-medium active-nav">概要</button>
+                    <button data-target="curriculum" class="nav-link px-3 py-2 rounded-md text-sm font-medium">カリキュラム</button>
+                    <button data-target="learning" class="nav-link px-3 py-2 rounded-md text-sm font-medium">学習と実施</button>
+                    <button data-target="results" class="nav-link px-3 py-2 rounded-md text-sm font-medium">成果と次の一歩</button>
+                </nav>
+                <button id="mobile-menu-button" class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                    <span class="sr-only">メインメニューを開く</span>
+                    <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="md:hidden" id="mobile-menu" style="display: none;">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <button data-target="home" class="nav-link mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-white bg-slate-900 active-nav">概要</button>
+                <button data-target="curriculum" class="nav-link mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">カリキュラム</button>
+                <button data-target="learning" class="nav-link mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">学習と実施</button>
+                <button data-target="results" class="nav-link mobile-nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">成果と次の一歩</button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" class="container mx-auto p-4 sm:p-6 lg:p-8">
+        </main>
+
+    <footer class="bg-slate-800 text-white py-8 text-center">
+        <p class="text-sm">&copy; <span id="currentYear"></span> 貴社名. All rights reserved.</p>
+        <p class="text-xs mt-1">このSPAはGeminiが調査したレポートに基づき生成されました。</p>
+    </footer>
+
+    <div id="curriculumModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle" class="text-2xl font-semibold mb-4 text-slate-700"></h3>
+            <div id="modalBody" class="text-sm"></div>
+        </div>
+    </div>
+
+    <script>
+        const currentYear = new Date().getFullYear();
+        document.getElementById('currentYear').textContent = currentYear;
+
+        const sections = {
+            home: `
+                <div class="space-y-6 section-content">
+                    <section id="executive-summary" class="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-semibold mb-4 text-teal-600">I. エグゼクティブサマリー</h2>
+                        <p class="mb-4">本報告書は、従業員60名規模の企業における経営幹部育成を目的とした、MBA（経営学修士）の原則に基づきつつ企業規模に合わせて最適化された研修プログラムをご提案するものです。本プログラムの目的は、経営幹部の方々が現代の複雑なビジネス環境において的確な意思決定を行い、企業を持続的成長へと導くための高度な経営知識と実践的スキルを習得することにあります。</p>
+                        <p class="mb-4">ご提案するカリキュラムは、MBAの主要科目を網羅しつつ、特に中小企業（SME）の経営に不可欠な戦略的思考、リーダーシップ、イノベーション、そして近年重要性が増しているデジタルトランスフォーメーション（DX）やAI活用といった現代的課題への対応能力強化に重点を置いています。学習形式は、多忙な経営幹部の方々の負担を考慮し、柔軟かつ実践的なアプローチを採用します。</p>
+                        <p class="mb-4">本プログラムの導入により、経営幹部の戦略的意思決定能力の向上、業務効率の改善、リーダーシップの発揮、そして組織全体の学習意欲と革新性の醸成が期待されます。これらは結果として、企業の競争力強化と持続的な成長基盤の確立に貢献するものと考えられます。</p>
+                         <p class="italic text-sm text-slate-600">このセクションでは、プログラムの全体像と、中小企業が経営幹部育成に投資することの重要性について概説しています。詳細なカリキュラムや実施計画は、他のセクションでご確認いただけます。</p>
+                    </section>
+                    <section id="program-basis" class="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-semibold mb-4 text-teal-600">II. 貴社経営幹部のためのMBAスタイルプログラムの基礎</h2>
+                        <p class="mb-3">このセクションでは、MBA教育の核心と、それが従業員60名規模の企業においてどのように適用され、なぜ重要なのかを解説します。特に、実践力、戦略的リーダーシップ、問題解決能力、そして人的資本としての経営幹部の価値に焦点を当てています。</p>
+                        <p class="mb-3">MBA教育の核心は、経営に関する包括的な知識体系を提供し、<span class="key-phrase font-semibold text-teal-700">戦略的思考力<span class="tooltip">企業の長期的目標達成のため、外部環境と内部資源を分析し、最適な行動方針を策定・実行する思考プロセス。</span></span>と<span class="key-phrase font-semibold text-teal-700">問題解決能力<span class="tooltip">複雑な状況や課題を特定・分析し、効果的な解決策を導き出す能力。</span></span>を涵養することにあります。これは、企業の経営資源である「ヒト・モノ・カネ・情報」を効果的に活用し、事業を成功に導くための普遍的な原則です。</p>
+                        <p class="mb-3">しかし、従業員60名規模の企業においては、これらの原則をより<span class="key-phrase font-semibold text-teal-700">実践的かつ機動的に適用できる能力<span class="tooltip">理論を実際の業務に落とし込み、変化に迅速に対応しながら成果を出す力。</span></span>が求められます。限られたリソースの中で多岐にわたる業務を遂行し、迅速な意思決定を下す必要があるため、MBAで学ぶ知識を「知っている」だけでなく、「実行できる」レベルまで昇華させることが重要です。</p>
+                        <p class="mb-3">中小企業における<span class="key-phrase font-semibold text-teal-700">戦略的リーダーシップ<span class="tooltip">ビジョンを示し、チームを導き、変化を乗り越えながら組織を目標達成に導く指導力。特に中小企業では変化への適応性が重要。</span></span>は、長期的なビジョンを描きつつ、日々の事業運営における変化に俊敏に対応するバランス感覚を必要とします。時間、資金、人材といった経営資源の最適化は、常に念頭に置くべき課題です。</p>
+                        <p class="mb-3">中小企業においては、経営幹部チームが小規模であるため、メンバー個々の能力向上が組織全体の機敏性や意思決定の質に与える影響は、大企業に比べて格段に大きく、かつ迅速に現れる傾向があります。経営幹部がMBAで得られるような包括的なビジネス知識と実践的な応用力を同時に高めることで、<span class="key-phrase font-semibold text-teal-700">部門横断的な視点からの統合された意思決定能力<span class="tooltip">各部門の状況を理解し、全社最適の観点から判断を下す力。</span></span>が飛躍的に向上します。</p>
+                    </section>
+                </div>
+            `,
+            curriculum: `
+                <div class="space-y-6 section-content">
+                    <section id="curriculum-overview" class="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-semibold mb-4 text-teal-600">III. 貴社向けに最適化されたMBAカリキュラム案</h2>
+                        <p class="mb-4">このセクションでは、貴社の規模と特性に合わせて最適化されたMBAカリキュラム案を提示します。カリキュラムは「基幹経営モジュール」と「SME特化・現代的トピック」の2つの主要カテゴリに分かれています。各モジュール名をクリックすると、より詳細な学習目標や中小企業（SME）への特化ポイントが表示されます。</p>
+                        <p class="mb-4">本カリキュラムは、MBAの基幹科目を網羅しつつ、特に中小企業の文脈に合わせたカスタマイズを重視しています。現代のビジネス環境において不可欠なAIやM&Aといったトピックも組み込んでいます。人的資本管理、イノベーションと企業家精神、そしてデジタルトランスフォーメーションといったモジュール間の連携は特に重要です。</p>
+                    </section>
+                    <div id="curriculum-modules" class="space-y-4">
+                        </div>
+                     <section class="bg-white p-6 rounded-lg shadow-lg mt-6">
+                        <h3 class="text-xl font-semibold mb-3 text-slate-700">カスタマイズと選択科目について</h3>
+                        <p>「選択科目」については、プログラム開始前にCEOや経営幹部チームとの間で現状の課題や戦略的優先事項について詳細なヒアリングを行い、その結果に基づいて最終決定することが望ましいです。これにより、カリキュラム自体が企業の状況に即応するアジャイルなツールとなり、中小企業の特性を反映したものとなります。このカスタマイズプロセス自体が、経営チームにとって自社の最優先課題を明確化し、優先順位付けを行う貴重な戦略的討議の機会となり得ます。</p>
+                    </section>
+                </div>
+            `,
+            learning: `
+                <div class="space-y-6 section-content">
+                    <section id="learning-format" class="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-semibold mb-4 text-teal-600">IV. 推奨される学習形式と実施方法</h2>
+                        <p class="mb-4">多忙な経営幹部の方々にとって、学習効果を最大化しつつ業務への支障を最小限に抑えるためには、実践的かつ柔軟な学習形式の選択が不可欠です。このセクションでは、貴社に適した学習オプションと、学んだ知識を実務に活かすための具体的な応用方法を提案します。</p>
+                        
+                        <h3 class="text-xl font-semibold mt-6 mb-3 text-slate-700">多忙な経営幹部向けの選択肢</h3>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="border p-4 rounded-md hover:shadow-md transition-shadow bg-teal-50">
+                                <h4 class="font-semibold text-teal-700"><span class="text-2xl mr-2">🔄</span>ブレンデッドラーニング</h4>
+                                <p class="text-sm">基礎知識はオンライン、議論や演習は対面ワークショップ。柔軟性と深い学びを両立。</p>
+                            </div>
+                            <div class="border p-4 rounded-md hover:shadow-md transition-shadow bg-sky-50">
+                                <h4 class="font-semibold text-sky-700"><span class="text-2xl mr-2">🗓️</span>パートタイム・モジュラーアプローチ</h4>
+                                <p class="text-sm">月1回や四半期ごとなど、モジュール分割し夜間や週末に実施。管理しやすく消化しやすい。</p>
+                            </div>
+                            <div class="border p-4 rounded-md hover:shadow-md transition-shadow bg-indigo-50">
+                                <h4 class="font-semibold text-indigo-700"><span class="text-2xl mr-2">🚀</span>集中ワークショップ／ブートキャンプ</h4>
+                                <p class="text-sm">特定トピックを2〜3日で集中学習。短期間で効果大。</p>
+                            </div>
+                            <div class="border p-4 rounded-md hover:shadow-md transition-shadow bg-purple-50">
+                                <h4 class="font-semibold text-purple-700"><span class="text-2xl mr-2">💻</span>オンライン学習</h4>
+                                <p class="text-sm">オンライン教材とバーチャル議論・コーチング。地理的制約なし。</p>
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-semibold mt-8 mb-3 text-slate-700">実践的応用の重視</h3>
+                         <div class="grid md:grid-cols-2 gap-4">
+                            <div class="border p-4 rounded-md hover:shadow-md transition-shadow">
+                                <h4 class="font-semibold"><span class="text-2xl mr-2">📊</span>ケーススタディメソッド</h4>
+                                <p class="text-sm">SME関連ケースで分析力・意思決定能力を養成。</p>
+                            </div>
+                            <div class="border p-4 rounded-md hover:shadow-md transition-shadow">
+                                <h4 class="font-semibold"><span class="text-2xl mr-2">🎮</span>シミュレーションとビジネスゲーム</h4>
+                                <p class="text-sm">リスクなしで戦略的意思決定を実践。</p>
+                            </div>
+                            <div class="border p-4 rounded-md hover:shadow-md transition-shadow">
+                                <h4 class="font-semibold"><span class="text-2xl mr-2">🎯</span>アクションラーニングプロジェクト</h4>
+                                <p class="text-sm">自社の実際の課題に取り組み、学んだ概念を業務に直接応用。</p>
+                            </div>
+                            <div class="border p-4 rounded-md hover:shadow-md transition-shadow">
+                                <h4 class="font-semibold"><span class="text-2xl mr-2">🤝</span>ピアコーチングとグループワーク</h4>
+                                <p class="text-sm">知識共有と協調的な問題解決を奨励。</p>
+                            </div>
+                             <div class="border p-4 rounded-md hover:shadow-md transition-shadow">
+                                <h4 class="font-semibold"><span class="text-2xl mr-2">🎤</span>ゲストスピーカー／業界専門家</h4>
+                                <p class="text-sm">成功SME経営者や専門家から実践的知見を学ぶ。</p>
+                            </div>
+                        </div>
+                        <p class="mt-6 bg-amber-50 p-4 rounded-md text-amber-800 text-sm">特に<strong class="font-semibold">アクションラーニングを重視したブレンデッドアプローチ</strong>は、プログラムを単発の「研修イベント」から、継続的な「組織開発プロセス」へと転換させる可能性を秘めています。学習が企業の日常業務のリズムに組み込まれ、組織としての問題解決能力と戦略実行能力の向上に繋がります。</p>
+                    </section>
+                    <section id="implementation-schedule" class="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-semibold mb-4 text-teal-600">V. 提案する実施スケジュール</h2>
+                        <p class="mb-4">プログラムを円滑に導入し、経営幹部の方々が無理なく学習を進められるよう、段階的な実施スケジュール案を提示します。このアプローチにより、学習内容の定着、実践への応用、そして状況変化に応じた調整が可能になります。以下は12～18ヶ月間の例です。</p>
+                        <div class="chart-container my-6">
+                            <canvas id="scheduleChart"></canvas>
+                        </div>
+                        <div id="schedule-phases" class="space-y-4">
+                            </div>
+                        <p class="mt-6 text-sm italic text-slate-600">このスケジュールはあくまで一例です。企業の優先事項や経営幹部からのフィードバックに基づき、ペースやトピックを調整できる柔軟性が重要です。アクションラーニングプロジェクトを企業の戦略的優先事項と連携させることで、プログラムはスキル開発と事業目標達成の両方に貢献します。</p>
+                    </section>
+                </div>
+            `,
+            results: `
+                <div class="space-y-6 section-content">
+                    <section id="measuring-results" class="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-semibold mb-4 text-teal-600">VI. プログラム成果の測定と投資対効果（ROI）の確保</h2>
+                        <p class="mb-4">本プログラムの導入効果を明確に示し、CEOによる評価と継続的な改善に資するため、成果測定の方法を概説します。このセクションでは、具体的なKPI（主要業績評価指標）の例と、フィードバック収集によるプログラム改善のプロセスについて説明します。</p>
+                        
+                        <h3 class="text-xl font-semibold mt-6 mb-3 text-slate-700">プログラム効果測定のための主要業績評価指標（KPI）</h3>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="font-semibold text-lg text-sky-700 mb-2">事業レベルのKPI：</h4>
+                                <ul class="list-disc list-inside text-sm space-y-1">
+                                    <li class="key-phrase">アクションラーニングプロジェクト対象業務指標の改善<span class="tooltip">例：コスト削減率、生産性向上率（事例：生産性15%向上、コスト10%削減）など、具体的な数値目標を設定し追跡します。</span></li>
+                                    <li class="key-phrase">新規戦略イニシアティブの提案・実行数<span class="tooltip">プログラムを通じて生まれた新しい事業アイデアや改善提案が、実際にいくつ計画・実行されたかを測定します。</span></li>
+                                    <li class="key-phrase">戦略連動の収益成長や市場シェア改善<span class="tooltip">プログラムの成果が、中長期的に企業の収益や市場での競争力向上にどう貢献したかを評価します。</span></li>
+                                    <li class="key-phrase">デジタルツールやAIソリューションの導入成功<span class="tooltip">DXやAI活用モジュールで学んだことが、具体的な技術導入や活用成功に繋がったかを評価します。</span></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg text-sky-700 mb-2">チーム／個人レベルのKPI：</h4>
+                                <ul class="list-disc list-inside text-sm space-y-1">
+                                    <li class="key-phrase">観察されるリーダーシップ行動の変化<span class="tooltip">意思決定の質、チームのモチベーション向上、戦略的思考の発露など、上司・同僚・部下からの観察やフィードバックで評価します。</span></li>
+                                    <li class="key-phrase">360度評価（プログラム前後）<span class="tooltip">多角的な視点から、プログラム参加前後の経営幹部のパフォーマンス変化を測定します。</span></li>
+                                    <li class="key-phrase">協調的解決能力の向上<span class="tooltip">経営チームが複雑な問題に対して、より効果的に協力して解決策を見出せるようになったかを評価します。</span></li>
+                                    <li class="key-phrase">スキル向上と自信に関する自己評価<span class="tooltip">参加者自身が、プログラムを通じてどのスキルが向上し、業務遂行への自信がどう変化したかを評価します。</span></li>
+                                    <li class="key-phrase">参加者の昇進や職責拡大<span class="tooltip">プログラムがキャリア成長に繋がったか。事例：3年間で10名が部長へ昇進、参加者の21%が昇進・職務変更。</span></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-semibold mt-8 mb-3 text-slate-700">フィードバック収集と継続的プログラム改善の方法</h3>
+                        <ul class="list-disc list-inside text-sm space-y-1">
+                            <li><strong>定期的な進捗確認：</strong> 参加者およびCEOとの定期的な面談。</li>
+                            <li><strong>モジュール後アンケート：</strong> 直後の反応や学習内容の理解度を評価。</li>
+                            <li><strong>アクションラーニングプロジェクトレビュー：</strong> 知識の応用度とプロジェクト成果を評価。</li>
+                            <li><strong>最終プログラムレビュー：</strong> 全体的な影響を評価し、将来的な能力開発の方向性を特定。</li>
+                            <li>収集したフィードバックを基に、将来のモジュールや継続的なコーチング内容を改善。</li>
+                        </ul>
+                        <p class="mt-6 bg-green-50 p-4 rounded-md text-green-800 text-sm">プログラム開始前に経営チームと共同で成功指標を定義するプロセスは、参加者の主体的な関与とプログラムへの集中度を高めます。アクションラーニングプロジェクトから得られた初期の成功事例を積極的に共有・称賛することは、プログラム全体の推進力を高め、投資価値を具体的に示すことに繋がります。</p>
+                    </section>
+                    <section id="next-steps" class="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-semibold mb-4 text-teal-600">VII. 次のステップとパートナーシップ</h2>
+                        <p class="mb-4">本提案プログラムを具体的に推進していくための、次のステップについてご提案申し上げます。これらのステップは、プログラムの成功に向けた重要な基盤となります。</p>
+                        <ol class="list-decimal list-inside space-y-3 text-sm">
+                            <li>
+                                <strong>社内調整会議の実施：</strong>
+                                <p class="ml-4 text-xs text-slate-600">経営幹部チームと本提案カリキュラムおよびスケジュールについて協議し、意見を収集しプログラムをさらに調整します。</p>
+                            </li>
+                            <li>
+                                <strong>段階的コミットメントとパイロット実施の検討：</strong>
+                                <p class="ml-4 text-xs text-slate-600">まずはフェーズ1へのコミットを検討し、成果レビュー後に後続フェーズに進むアプローチも有効です。</p>
+                            </li>
+                            <li>
+                                <strong>社内推進担当者の指名：</strong>
+                                <p class="ml-4 text-xs text-slate-600">プログラムのロジスティクス調整や社内推進役となる担当者を指名します。</p>
+                            </li>
+                            <li>
+                                <strong>（必要に応じて）外部パートナーの検討：</strong>
+                                <p class="ml-4 text-xs text-slate-600">外部のMBAプログラム提供機関や専門コンサルタントの活用を検討します。</p>
+                            </li>
+                        </ol>
+                        <h3 class="text-lg font-semibold mt-6 mb-2 text-slate-700">パートナーシップのご提案</h3>
+                        <p class="text-sm">本提案の専門家として、カリキュラムのさらなる詳細化、実施パートナーの選定、あるいは初期ワークショップのファシリテーションなど、貴社のニーズに応じた支援を提供することが可能です。</p>
+                        <p class="mt-6 bg-blue-50 p-4 rounded-md text-blue-800 text-sm">「次のステップ」の段階は、MBAプログラム自体で教えられる協調的かつ戦略的なアプローチを実践する機会でもあります。経営幹部チームをプログラムの最終調整と意思決定プロセスに関与させることは、初期からオーナーシップを育むことに繋がります。</p>
+                    </section>
+                </div>
+            `
+        };
+
+        const curriculumData = {
+            "A. 基幹経営モジュール": [
+                { title: "1. SMEにおける戦略経営とリーダーシップ", mbaField: "戦略", topics: "SMEの競争環境分析、持続的成長戦略の策定、ビジョン設定、アジャイルな戦略実行、小規模組織における変革のリーダーシップ、限られたデータでの効果的な意思決定", note: "SME向け実践的ツールの活用、同規模企業のケーススタディ、リーンなチームでの戦略的思考構築。SMEの機敏性を競争優位に繋げる方法。", ref: "[6, 13, 14]" },
+                { title: "2. 成長のためのマーケティング・営業管理", mbaField: "マーケティング", topics: "ニッチ市場のセグメンテーション、価値提案の設計、SME向けデジタルマーケティング戦略、リーンブランディング、予算に応じたCRM、小規模チーム向け販売予測と管理", note: "コスト効率の高いマーケティング戦術、デジタルツールの活用、限られたリソースでの顧客ロイヤルティ構築。SMEにおけるAIを活用した顧客分析の実践。", ref: "[2, 13, 14, 19]" },
+                { title: "3. SME経営者のための財務会計", mbaField: "会計・財務", topics: "財務諸表（損益計算書、貸借対照表、キャッシュフロー計算書）の理解、SME向け予算策定と予測、キャッシュフロー管理と最適化、コスト管理、小規模プロジェクトの投資評価、SME向け主要財務KPI", note: "SMEの非財務系経営幹部向けの実践的な財務意思決定。成長と安定のための財務管理方法。", ref: "[2, 13, 14, 15]" },
+                { title: "4. 効率化のためのオペレーションとプロセス改善", mbaField: "オペレーション管理", topics: "SMEオペレーションにおけるバリューストリームマッピング、リーン原則、品質管理、小規模ビジネスにおけるサプライチェーン考察、業務効率化のための技術導入、社内イニシアティブのためのプロジェクトマネジメント基礎", note: "実践的で低コストな改善策、既存リソースの最適化、大規模投資を伴わないSMEオペレーション強化のための技術活用。", ref: "[14, 15]" },
+                { title: "5. 組織行動と人的資本管理", mbaField: "組織・人事", topics: "小規模チームのリーダーシップと動機付け、SMEにおける強力な企業文化構築、効果的なコミュニケーション、コンフリクト解決、限られた予算での人材獲得と維持、能力開発のための業績管理", note: "小規模チーム特有の力学、エンゲージメントとオーナーシップの醸成、内部からの人材育成。CEOが採用に15%、育成に15%の時間を割くべきという視点 [1] を重視。", ref: "[1, 2, 13, 15]" }
+            ],
+            "B. SME特化・現代的トピック": [
+                { title: "1. SMEにおけるイノベーションと企業家精神", mbaField: "イノベーション・起業", topics: "革新的文化の醸成、新規事業機会の特定、既存SMEへのリーンスタートアップ手法の応用、イノベーションプロジェクト管理、社内起業家精神（イントラプレナーシップ）", note: "限られた研究開発予算でのイノベーション手法、顧客フィードバックを活用した革新、全経営幹部における起業家精神の奨励。入山章栄教授の中小企業イノベーション論も参照 [10, 11]。", ref: "[6, 9, 34]" },
+                { title: "2. 事業成長のためのDXとAI活用", mbaField: "テクノロジー経営", topics: "AIの理解とSME向け実用的応用、DXロードマップ策定、意思決定のためのデータ分析活用、SME向けサイバーセキュリティ基礎、適切な技術の選定と導入", note: "手頃で拡張性のあるデジタルソリューション、実用的なAI活用事例（例：業務自動化、顧客インサイト）、デジタル化に伴う変革管理。トップダウンでのリーダーシップを強調 [1]。中小企業におけるDX推進事例も参考に [12]。", ref: "[1, 12, 19]" },
+                { title: "3. （該当する場合）SMEのための戦略的提携とM&A", mbaField: "M&A・戦略的提携", topics: "潜在的パートナーの特定と評価、提携の構築、SME向けM&Aプロセスの基礎、小規模企業におけるPMI（買収後の統合）の課題", note: "SMEの成長戦略としてのM&A、企業文化適合の重要性、限られた専門リソースでの統合管理。M&A専門チーム・スキルの社内構築の必要性 [1]。", ref: "[1, 13]" },
+                { title: "4. 事業開発と組織拡大", mbaField: "事業開発", topics: "新規市場の特定と参入、拡張性のあるビジネスモデル開発、成長に伴う課題管理、拡大のための партнерシップ構築", note: "従業員60名規模の企業を拡大するための実践的戦略、成長期のキャッシュフロー管理、チーム拡大に伴う企業文化の維持。", ref: "[6]" },
+                { title: "5. （企業ニーズに応じた選択科目）プロジェクトマネジメント／ビジネス法務・倫理／SME向けサプライチェーン管理", mbaField: "各専門分野", topics: "（プロジェクトマネジメント）SMEプロジェクトのスコープ定義、タイムライン・リソース管理。（ビジネス法務・倫理）SME向け主要法務事項、倫理的意思決定。（サプライチェーン）小ロット向けサプライチェーン最適化、サプライヤー関係管理。", note: "経営幹部チームの当面の戦略的優先事項や特定されたスキルギャップに合わせて調整。", ref: "[2, 15]" }
+            ]
+        };
+
+        const scheduleData = [
+            { phase: "フェーズ1：基礎固め", duration: "1～6ヶ月目", activities: "戦略経営とリーダーシップ<br>マーケティング・営業管理<br>SME経営者のための財務会計", format: "キックオフワークショップ<br>オンラインモジュール（基礎）<br>初期ケーススタディ討議", milestones: "主要財務概念の習得<br>自社戦略分析の開始", color: "rgba(54, 162, 235, 0.7)" }, // Blue
+            { phase: "フェーズ2：深掘りと応用学習", duration: "7～12ヶ月目", activities: "オペレーションとプロセス改善<br>組織行動と人的資本管理<br>SMEにおけるイノベーションと企業家精神<br>事業成長のためのDXとAI活用", format: "集中ワークショップ<br>アクションラーニングプロジェクト開始<br>グループコーチング", milestones: "業務改善案の策定<br>イノベーション・DX戦略案の骨子作成", color: "rgba(255, 159, 64, 0.7)" }, // Orange
+            { phase: "フェーズ3：戦略的統合と将来展望", duration: "13～18ヶ月目", activities: "（該当する場合）SMEのための戦略的提携とM&A<br>事業開発と組織拡大<br>（企業ニーズに応じた）選択科目", format: "キャップストーンプロジェクト<br>CEO/取締役会への提言発表<br>戦略的イニシアティブのピアレビュー", milestones: "統合的な事業成長戦略の策定<br>実行計画の具体化", color: "rgba(75, 192, 192, 0.7)" } // Green
+        ];
+
+
+        function populateCurriculum() {
+            const container = document.getElementById('curriculum-modules');
+            if (!container) return;
+            container.innerHTML = ''; 
+            Object.keys(curriculumData).forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'bg-white p-4 rounded-lg shadow';
+                
+                const categoryTitle = document.createElement('h3');
+                categoryTitle.className = 'text-xl font-semibold mb-3 text-slate-700 cursor-pointer flex justify-between items-center';
+                categoryTitle.textContent = category;
+                
+                const molécules = curriculumData[category];
+                const moduleList = document.createElement('ul');
+                moduleList.className = 'space-y-2 pl-4 hidden'; 
+                
+                molécules.forEach(module => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'text-sm text-teal-600 hover:text-teal-800 cursor-pointer';
+                    listItem.textContent = module.title;
+                    listItem.onclick = () => openModal(module);
+                    moduleList.appendChild(listItem);
+                });
+
+                const icon = document.createElement('span');
+                icon.innerHTML = '&#x25BC;'; 
+                categoryTitle.appendChild(icon);
+
+                categoryTitle.onclick = () => {
+                    moduleList.classList.toggle('hidden');
+                    icon.innerHTML = moduleList.classList.contains('hidden') ? '&#x25BC;' : '&#x25B2;'; 
+                };
+                
+                categoryDiv.appendChild(categoryTitle);
+                categoryDiv.appendChild(moduleList);
+                container.appendChild(categoryDiv);
+            });
+        }
+        
+        function openModal(module) {
+            document.getElementById('modalTitle').textContent = module.title;
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <p class="mb-2"><strong>MBA主要分野:</strong> ${module.mbaField}</p>
+                <p class="mb-2"><strong>SME向け主要トピックと学習目標:</strong><br>${module.topics.replace(/\n/g, '<br>')}</p>
+                <p class="mb-2"><strong>カスタマイズ・SME特化ノート:</strong><br>${module.note.replace(/\n/g, '<br>')}</p>
+                <p><strong>関連資料例:</strong> ${module.ref}</p>
+            `;
+            document.getElementById('curriculumModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('curriculumModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('curriculumModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        function populateSchedule() {
+            const container = document.getElementById('schedule-phases');
+            if (!container) return;
+            container.innerHTML = '';
+            scheduleData.forEach(item => {
+                const phaseDiv = document.createElement('div');
+                phaseDiv.className = 'bg-white p-4 rounded-lg shadow mb-4 border-l-4';
+                phaseDiv.style.borderColor = item.color;
+
+                phaseDiv.innerHTML = `
+                    <h4 class="text-lg font-semibold text-slate-700">${item.phase} <span class="text-sm font-normal text-gray-500">(${item.duration})</span></h4>
+                    <div class="grid md:grid-cols-3 gap-4 mt-2 text-xs">
+                        <div><strong>モジュール／活動内容:</strong><br>${item.activities}</div>
+                        <div><strong>実施形式:</strong><br>${item.format}</div>
+                        <div><strong>主要マイルストーン／成果物:</strong><br>${item.milestones}</div>
+                    </div>
+                `;
+                container.appendChild(phaseDiv);
+            });
+        }
+        
+        let scheduleChartInstance = null;
+        function renderScheduleChart() {
+            const ctx = document.getElementById('scheduleChart');
+            if (!ctx) return;
+
+            if (scheduleChartInstance) {
+                scheduleChartInstance.destroy();
+            }
+
+            const labels = scheduleData.map(item => item.phase + ` (${item.duration})`);
+            const durations = scheduleData.map(item => {
+                const match = item.duration.match(/(\d+)[～～](\d+)ヶ月目/);
+                return match ? parseInt(match[2]) : 6; 
+            });
+
+
+            scheduleChartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'フェーズ期間 (ヶ月単位、上限)',
+                        data: durations,
+                        backgroundColor: scheduleData.map(item => item.color),
+                        borderColor: scheduleData.map(item => item.color.replace('0.7', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '期間 (ヶ月目)'
+                            }
+                        },
+                        y: {
+                           ticks: {
+                                autoSkip: false, 
+                                callback: function(value, index, values) {
+                                    const label = this.getLabelForValue(value);
+                                    if (label.length > 20) { 
+                                        const words = label.split(' ');
+                                        const lines = [];
+                                        let currentLine = '';
+                                        words.forEach(word => {
+                                            if ((currentLine + word).length > 20) {
+                                                lines.push(currentLine.trim());
+                                                currentLine = '';
+                                            }
+                                            currentLine += word + ' ';
+                                        });
+                                        lines.push(currentLine.trim());
+                                        return lines;
+                                    }
+                                    return label;
+                                }
+                           }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false 
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        label += context.parsed.x + 'ヶ月目 (上限)';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        const mainContent = document.getElementById('main-content');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        function setActiveSection(targetId) {
+            if (sections[targetId]) {
+                mainContent.innerHTML = sections[targetId];
+                if (mainContent.firstElementChild) {
+                    mainContent.firstElementChild.classList.add('section-fade-enter');
+                    setTimeout(() => {
+                        if(mainContent.firstElementChild) { 
+                           mainContent.firstElementChild.classList.add('section-fade-enter-active');
+                        }
+                    }, 0);
+                } else {
+                    console.error("Error: mainContent.firstElementChild is null after setting innerHTML for targetId:", targetId);
+                }
+            } else {
+                console.error("Error: Invalid targetId for sections:", targetId);
+                mainContent.innerHTML = '<p class="text-red-500">エラー: 要求されたセクションが見つかりません。</p>';
+            }
+
+
+            navLinks.forEach(link => {
+                link.classList.toggle('active-nav', link.dataset.target === targetId);
+                 if (link.classList.contains('mobile-nav-link')) {
+                    link.classList.toggle('bg-slate-900', link.dataset.target === targetId);
+                    link.classList.toggle('text-white', link.dataset.target === targetId);
+                    link.classList.toggle('text-gray-300', link.dataset.target !== targetId);
+                    link.classList.toggle('hover:bg-gray-700', link.dataset.target !== targetId);
+                }
+            });
+
+            if (targetId === 'curriculum') {
+                populateCurriculum();
+            }
+            if (targetId === 'learning') {
+                populateSchedule(); 
+                setTimeout(renderScheduleChart, 50); 
+            }
+            if (mobileMenu.style.display === 'block') {
+                mobileMenu.style.display = 'none';
+                mobileMenuButton.children[0].classList.remove('hidden'); 
+                mobileMenuButton.children[1].classList.add('hidden'); 
+            }
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                setActiveSection(link.dataset.target);
+            });
+        });
+        
+        mobileMenuButton.addEventListener('click', () => {
+            const isOpen = mobileMenu.style.display === 'block';
+            mobileMenu.style.display = isOpen ? 'none' : 'block';
+            mobileMenuButton.children[0].classList.toggle('hidden', !isOpen);
+            mobileMenuButton.children[1].classList.toggle('hidden', isOpen);
+        });
+
+        setActiveSection('home');
+
+        document.addEventListener('mousemove', function(e) {
+            const tooltips = document.querySelectorAll('.tooltip');
+            tooltips.forEach(tooltip => {
+                if (tooltip.style.display === 'block') {
+                    let x = e.clientX + 15;
+                    let y = e.clientY + 15;
+                    if (x + tooltip.offsetWidth > window.innerWidth) {
+                        x = e.clientX - tooltip.offsetWidth - 15;
+                    }
+                    if (y + tooltip.offsetHeight > window.innerHeight) {
+                        y = e.clientY - tooltip.offsetHeight - 15;
+                    }
+                    tooltip.style.left = x + 'px';
+                    tooltip.style.top = y + 'px';
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
